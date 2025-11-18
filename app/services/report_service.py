@@ -5,20 +5,15 @@
 from loguru import logger as log
 
 from app.schemas.github_payload import (
+    # Оставляем только основные Payload-модели, которые используются в аннотациях функций
     GitHubPullRequestPayload,
     GitHubPushPayload,
     GitHubPullRequestReviewPayload,
     GitHubIssuesPayload,
     GitHubCheckRunPayload,
     GitHubReleasePayload,
-    PullRequest,
-    Repository,
-    Review,
-    Issue,
-    CheckRun,
-    Release,
-    Commit,
-    GitHubUser,
+    # Удалены: PullRequest, Repository, Review, Issue, CheckRun, Release, Commit, GitHubUser,
+    # так как они не используются напрямую, а только вложены в Payload
 )
 
 

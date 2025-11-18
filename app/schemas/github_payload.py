@@ -99,7 +99,40 @@ class GitHubPushPayload(BaseModel):
     before: str
     after: str
     repository: Repository
-    pusher: GitHubPusher  # ← Изменили тип на GitHubPusher
-    sender: GitHubUser     # ← Sender остается полным объектом
+    pusher: GitHubPusher
+    sender: GitHubUser
     commits: List[Commit]
     head_commit: Optional[Commit] = None
+
+
+# --- НОВЫЕ МОДЕЛИ (Исправление ошибки) ---
+
+class GitHubPullRequestReviewPayload(BaseModel):
+    action: str
+    review: Review
+    pull_request: PullRequest
+    repository: Repository
+
+
+class GitHubIssuesPayload(BaseModel):
+    action: str
+    issue: Issue
+    repository: Repository
+
+
+class GitHubCheckRunPayload(BaseModel):
+    action: str
+    check_run: CheckRun
+    repository: Repository
+
+
+class GitHubReleasePayload(BaseModel):
+    action: str
+    release: Release
+    repository: Repository
+
+# В зависимости от функционала, можно добавить и Payload для Alert
+# class GitHubSecurityAlertPayload(BaseModel):
+#     action: str
+#     alert: Alert
+#     repository: Repository
