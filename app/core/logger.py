@@ -44,7 +44,7 @@ class InterceptHandler(logging.Handler):
         )
 
 
-def setup_loguru() -> None:
+def setup_logger() -> None:
     """
     Настраивает Loguru, заменяя стандартную конфигурацию logging.
     """
