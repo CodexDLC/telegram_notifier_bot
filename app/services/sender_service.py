@@ -7,8 +7,10 @@ from app.core.config import (
     NOTIFY_CHANNEL_ID,
     PR_TOPIC_ID,
     PUSH_TOPIC_ID,
+    # --- ДОБАВЛЕННЫЕ КОНСТАНТЫ ---
     ISSUES_TOPIC_ID,
     CICD_TOPIC_ID,
+    # ----------------------------
     RELEASES_TOPIC_ID,
     SECURITY_TOPIC_ID,
 )
@@ -24,6 +26,40 @@ async def send_pr_notification(text: str) -> bool:
     return await _send_to_channel(text, PR_TOPIC_ID, "Pull Request")
 
 
+# === НОВОЕ: Pull Request Review ===
+async def send_pr_review_notification(text: str) -> bool:
+    """
+    Отправляет уведомление о Pull Request Review в топик PR.
+    (Ревью относятся к PR)
+
+    :param text: Текст сообщения (HTML)
+    :return: True, если успешно, иначе False
+    """
+    return await _send_to_channel(text, PR_TOPIC_ID, "Pull Request Review")
+
+
+# === НОВОЕ: Issues ===
+async def send_issues_notification(text: str) -> bool:
+    """
+    Отправляет уведомление об Issue в топик Issues.
+
+    :param text: Текст сообщения (HTML)
+    :return: True, если успешно, иначе False
+    """
+    return await _send_to_channel(text, ISSUES_TOPIC_ID, "Issue")
+
+
+# === НОВОЕ: CI/CD Check Run ===
+async def send_cicd_notification(text: str) -> bool:
+    """
+    Отправляет уведомление о CI/CD Check Run в топик CI/CD.
+
+    :param text: Текст сообщения (HTML)
+    :return: True, если успешно, иначе False
+    """
+    return await _send_to_channel(text, CICD_TOPIC_ID, "CI/CD Check Run")
+
+
 async def send_push_notification(text: str) -> bool:
     """
     Отправляет уведомление о Push в топик Push.
@@ -32,6 +68,15 @@ async def send_push_notification(text: str) -> bool:
     :return: True, если успешно, иначе False
     """
     return await _send_to_channel(text, PUSH_TOPIC_ID, "Push")
+
+async def send_releases_notification(text: str) -> bool:
+    """
+    Отправляет уведомление о Releases в топик Releases.
+
+    :param text: Текст сообщения (HTML)
+    :return: True, если успешно, иначе False
+    """
+    return await _send_to_channel(text, RELEASES_TOPIC_ID, "Release")
 
 
 async def _send_to_channel(text: str, topic_id: int | None, event_type: str) -> bool:
@@ -62,3 +107,4 @@ async def _send_to_channel(text: str, topic_id: int | None, event_type: str) -> 
     except TelegramAPIError as e:
         log.error(f"❌ [{event_type}] Ошибка при отправке в Telegram: {e}")
         return False
+

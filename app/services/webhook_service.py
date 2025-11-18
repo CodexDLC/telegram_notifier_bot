@@ -8,29 +8,26 @@ from app.core.config import GITHUB_WEBHOOK_SECRET
 from app.schemas.github_payload import (
     GitHubPullRequestPayload,
     GitHubPushPayload,
-    # Здесь должны быть импортированы все Pydantic схемы
-    # Но для нашего случая, только эти две используются в process_github_payload
-    # GitHubPullRequestReviewPayload,
-    # GitHubIssuesPayload,
-    # GitHubCheckRunPayload,
-    # GitHubReleasePayload,
+    GitHubPullRequestReviewPayload,
+    GitHubIssuesPayload,
+    GitHubCheckRunPayload,
+    GitHubReleasePayload,
 )
 from app.services.sender_service import (
     send_pr_notification,
     send_push_notification,
-    # Здесь должны быть импортированы все sender_service
-    # send_issues_notification,
-    # send_cicd_notification,
-    # send_releases_notification,
+    send_pr_review_notification,
+    send_issues_notification,
+    send_cicd_notification,
+    send_releases_notification,  # Оставляем для полноты импорта
 )
 from app.services.report_service import (
-    format_pr_message, # Используем импортированные функции
-    format_push_message, # Используем импортированные функции
-    # Здесь должны быть импортированы все report_service
-    # format_pr_review_message,
-    # format_issues_message,
-    # format_check_run_message,
-    # format_release_message,
+    format_pr_message,
+    format_push_message,
+    format_pr_review_message,
+    format_issues_message,
+    format_check_run_message,
+    format_release_message,
 )
 
 
@@ -68,7 +65,7 @@ async def process_github_payload(request: Request):
     try:
         if event_type == "push":
             payload = GitHubPushPayload(**json_data)
-            # !!! ИСПОЛЬЗУЕМ ИМПОРТИРОВАННУЮ ФУНКЦИЮ ИЗ report_service !!!
+            # !!! ИСПОЛЬЗУЕМ ЧИСТУЮ ФУНКЦИЮ ИЗ report_service !!!
             message = format_push_message(payload)
             if message:
                 await send_push_notification(message)
@@ -76,11 +73,41 @@ async def process_github_payload(request: Request):
 
         elif event_type == "pull_request":
             payload = GitHubPullRequestPayload(**json_data)
-            # !!! ИСПОЛЬЗУЕМ ИМПОРТИРОВАННУЮ ФУНКЦИЮ ИЗ report_service !!!
+            # !!! ИСПОЛЬЗУЕМ ЧИСТУЮ ФУНКЦИЮ ИЗ report_service !!!
             message = format_pr_message(payload)
             if message:
                 await send_pr_notification(message)
                 return {"status": "ok", "event": "pull_request"}
+
+        elif event_type == "pull_request_review":
+            payload = GitHubPullRequestReviewPayload(**json_data)
+            message = format_pr_review_message(payload)
+            if message:
+                await send_pr_review_notification(message)
+                return {"status": "ok", "event": "pull_request_review"}
+
+        elif event_type == "issues":
+            payload = GitHubIssuesPayload(**json_data)
+            message = format_issues_message(payload)
+            if message:
+                await send_issues_notification(message)
+                return {"status": "ok", "event": "issues"}
+
+        elif event_type == "check_run":
+            payload = GitHubCheckRunPayload(**json_data)
+            message = format_check_run_message(payload)
+            if message:
+                await send_cicd_notification(message)
+                return {"status": "ok", "event": "check_run"}
+
+        elif event_type == "release":
+            # Добавляем релизы, так как функция отправки была импортирована
+            payload = GitHubReleasePayload(**json_data)
+            message = format_release_message(payload)
+            if message:
+                await send_releases_notification(message)
+                return {"status": "ok", "event": "release"}
+
         else:
             log.info(f"ℹ️ Неподдерживаемый event: {event_type}")
             return {"status": "ignored", "reason": "unsupported_event"}
@@ -91,4 +118,4 @@ async def process_github_payload(request: Request):
 
     return {"status": "ignored", "reason": "no_message"}
 
-
+# !!! БЛОК С ЛОКАЛЬНЫМИ ДУБЛИКАТАМИ ФУНКЦИЙ УДАЛЕН !!!
