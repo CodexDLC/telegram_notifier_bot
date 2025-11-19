@@ -11,7 +11,7 @@ from app.schemas.github_payload import (
     GitHubPullRequestReviewPayload,
     GitHubIssuesPayload,
     GitHubCheckRunPayload,
-    GitHubReleasePayload,
+    GitHubReleasePayload, GitHubIssueCommentPayload,
     # Удалены: PullRequest, Repository, Review, Issue, CheckRun, Release, Commit, GitHubUser,
     # так как они не используются напрямую, а только вложены в Payload
 )
@@ -277,5 +277,52 @@ def format_release_message(payload: GitHubReleasePayload) -> str | None:
         text += f"\n📜 <b>Changelog:</b>\n<i>{short_body}</i>\n"
 
     text += f"\n🔗 <a href='{release.html_url}'>Посмотреть релиз</a>"
+
+    return text
+
+
+# ============================================================================
+# ISSUE COMMENTS
+# ============================================================================
+
+def format_comment_message(payload: GitHubIssueCommentPayload) -> str | None:
+    """Форматирует сообщение о новом комментарии"""
+    action = payload.action
+
+    # Нас интересуют только новые комментарии
+    if action != "created":
+        return None
+
+    comment = payload.comment
+    issue = payload.issue
+    repo = payload.repository
+    sender = payload.sender
+
+    # Игнорируем комментарии от ботов (опционально, чтобы не спамило)
+    if sender.login.endswith("[bot]"):
+        return None
+
+    # Определяем контекст: это PR или обычная Issue?
+    is_pr = issue.pull_request is not None
+    type_label = "PR" if is_pr else "Issue"
+
+    emoji = "💬"
+
+    text = (
+        f"{emoji} <b>Новый комментарий в {type_label}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📦 <b>Репо:</b> <a href='{repo.html_url}'>{repo.full_name}</a>\n"
+        f"📝 <b>{type_label}:</b> <a href='{issue.html_url}'>{issue.title} #{issue.number}</a>\n"
+        f"👤 <b>Автор:</b> <a href='{sender.html_url}'>@{sender.login}</a>\n"
+    )
+
+    # Добавляем текст комментария
+    if comment.body:
+        short_body = comment.body[:200] + "..." if len(comment.body) > 200 else comment.body
+        # Простая защита от HTML-инъекций
+        short_body = short_body.replace("<", "&lt;").replace(">", "&gt;")
+        text += f"\n<i>{short_body}</i>\n"
+
+    text += f"\n🔗 <a href='{comment.html_url}'>Перейти к комментарию</a>"
 
     return text

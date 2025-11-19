@@ -15,6 +15,13 @@ from app.core.config import (
     SECURITY_TOPIC_ID,
 )
 
+async def send_comment_notification(text: str) -> bool:
+    """
+    Отправляет уведомление о комментарии.
+    Используем PR_TOPIC_ID, так как комментарии чаще всего относятся к PR.
+    Если хотите разделить, можно использовать ISSUES_TOPIC_ID для Issues.
+    """
+    return await _send_to_channel(text, PR_TOPIC_ID, "Comment")
 
 async def send_pr_notification(text: str) -> bool:
     """

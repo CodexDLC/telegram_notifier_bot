@@ -1,26 +1,25 @@
 # app/schemas/github_payload.py
-from typing import Optional, List
-from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, ConfigDict
 
-# --- Общие вложенные модели ---
-class GitHubUser(BaseModel):
-    """Полная информация о пользователе GitHub (для PR, sender)"""
+# --- Базовая модель (если ты её уже внедрил, используй её, иначе ConfigDict в каждой) ---
+class GitHubBaseModel(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+
+# --- Вложенные модели ---
+class GitHubUser(GitHubBaseModel):
     login: str
     html_url: str
 
-
-class GitHubPusher(BaseModel):
-    """Информация о pusher (упрощенная, только name и email)"""
+class GitHubPusher(GitHubBaseModel):
     name: str
     email: str
 
-
-class Repository(BaseModel):
+class Repository(GitHubBaseModel):
     full_name: str
     html_url: str
 
-
-class PullRequest(BaseModel):
+class PullRequest(GitHubBaseModel):
     html_url: str
     title: str
     state: str
@@ -28,46 +27,46 @@ class PullRequest(BaseModel):
     user: GitHubUser
     merged: bool = False
 
-
-class Commit(BaseModel):
+class Commit(GitHubBaseModel):
     id: str
     message: str
     url: str
 
-
-class Review(BaseModel):
-    """Pull Request Review"""
+class Review(GitHubBaseModel):
     html_url: str
-    state: str  # approved, changes_requested, commented
+    state: str
     body: Optional[str] = None
     user: GitHubUser
     submitted_at: Optional[str] = None
 
-
-class Issue(BaseModel):
-    """GitHub Issue"""
+class Issue(GitHubBaseModel):
     html_url: str
     number: int
     title: str
-    state: str  # open, closed
+    state: str
     body: Optional[str] = None
     user: GitHubUser
     labels: Optional[List[dict]] = None
     assignees: Optional[List[GitHubUser]] = None
+    # ВАЖНО: Это поле позволяет понять, это PR или просто Issue
+    pull_request: Optional[Dict[str, Any]] = None
 
+class Comment(GitHubBaseModel):
+    """GitHub Comment"""
+    html_url: str
+    body: str
+    user: GitHubUser
+    created_at: Optional[str] = None
 
-class CheckRun(BaseModel):
-    """GitHub Check Run (CI/CD)"""
+class CheckRun(GitHubBaseModel):
     name: str
-    status: str  # queued, in_progress, completed
-    conclusion: Optional[str] = None  # success, failure, neutral, cancelled, skipped, timed_out
+    status: str
+    conclusion: Optional[str] = None
     html_url: str
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
 
-
-class Release(BaseModel):
-    """GitHub Release"""
+class Release(GitHubBaseModel):
     html_url: str
     tag_name: str
     name: Optional[str] = None
@@ -76,25 +75,14 @@ class Release(BaseModel):
     prerelease: bool = False
     author: GitHubUser
 
+# --- Payloads ---
 
-class Alert(BaseModel):
-    """Dependabot/Security Alert"""
-    html_url: str
-    number: int
-    state: str
-    severity: Optional[str] = None
-    summary: Optional[str] = None
-
-
-# --- Основные модели Payload ---
-
-class GitHubPullRequestPayload(BaseModel):
+class GitHubPullRequestPayload(GitHubBaseModel):
     action: str
     pull_request: PullRequest
     repository: Repository
 
-
-class GitHubPushPayload(BaseModel):
+class GitHubPushPayload(GitHubBaseModel):
     ref: str
     before: str
     after: str
@@ -104,35 +92,31 @@ class GitHubPushPayload(BaseModel):
     commits: List[Commit]
     head_commit: Optional[Commit] = None
 
-
-# --- НОВЫЕ МОДЕЛИ (Исправление ошибки) ---
-
-class GitHubPullRequestReviewPayload(BaseModel):
+class GitHubPullRequestReviewPayload(GitHubBaseModel):
     action: str
     review: Review
     pull_request: PullRequest
     repository: Repository
 
-
-class GitHubIssuesPayload(BaseModel):
+class GitHubIssuesPayload(GitHubBaseModel):
     action: str
     issue: Issue
     repository: Repository
 
-
-class GitHubCheckRunPayload(BaseModel):
+class GitHubCheckRunPayload(GitHubBaseModel):
     action: str
     check_run: CheckRun
     repository: Repository
 
-
-class GitHubReleasePayload(BaseModel):
+class GitHubReleasePayload(GitHubBaseModel):
     action: str
     release: Release
     repository: Repository
 
-# В зависимости от функционала, можно добавить и Payload для Alert
-# class GitHubSecurityAlertPayload(BaseModel):
-#     action: str
-#     alert: Alert
-#     repository: Repository
+class GitHubIssueCommentPayload(GitHubBaseModel):
+    """Payload для события issue_comment"""
+    action: str
+    comment: Comment
+    issue: Issue
+    repository: Repository
+    sender: GitHubUser
